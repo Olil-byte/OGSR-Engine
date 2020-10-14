@@ -231,7 +231,11 @@ bool CWeaponMagazined::TryReload()
 	{
 		bool forActor = ParentIsActor();
 
-		m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo(*m_ammoTypes[m_ammoType], forActor));
+		CWeaponAmmo* m_pAmmo{};
+		if (Core.Features.test(xrCore::Feature::hard_ammo_reload) && forActor)
+			m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmoMaxCurr(*m_ammoTypes[m_ammoType], forActor));
+		else
+			m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo(*m_ammoTypes[m_ammoType], forActor));
 
 		if((m_pAmmo || m_set_next_ammoType_on_reload != u32(-1)) || unlimited_ammo() || (IsMisfire() && iAmmoElapsed))
 		{
@@ -241,7 +245,11 @@ bool CWeaponMagazined::TryReload()
 		}
 		else for(u32 i = 0; i < m_ammoTypes.size(); ++i) 
 		{
-			m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo( *m_ammoTypes[i], forActor));
+			if (Core.Features.test(xrCore::Feature::hard_ammo_reload) && forActor)
+				m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmoMaxCurr(*m_ammoTypes[i], forActor));
+			else
+				m_pAmmo = smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo(*m_ammoTypes[i], forActor));
+
 			if(m_pAmmo) 
 			{ 
 				m_set_next_ammoType_on_reload = i; // https://github.com/revolucas/CoC-Xray/pull/5/commits/3c45cad1edb388664efbe3bb20a29f92e2d827ca
@@ -255,19 +263,6 @@ bool CWeaponMagazined::TryReload()
 	SwitchState(eIdle);
 
 	return false;
-}
-
-bool CWeaponMagazined::IsAmmoAvailable()
-{
-	bool forActor = ParentIsActor();
-
-	if (smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo(*m_ammoTypes[m_ammoType], forActor)))
-		return	(true);
-	else
-		for(u32 i = 0; i < m_ammoTypes.size(); ++i)
-			if (smart_cast<CWeaponAmmo*>(m_pCurrentInventory->GetAmmo(*m_ammoTypes[i], forActor)))
-				return	(true);
-	return		(false);
 }
 
 void CWeaponMagazined::OnMagazineEmpty() 
@@ -287,7 +282,7 @@ void CWeaponMagazined::OnMagazineEmpty()
 	inherited::OnMagazineEmpty();
 }
 
-void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
+bool CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 {
 	xr_map<LPCSTR, u16> l_ammo;
 	
@@ -312,9 +307,9 @@ void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
 	
 	if (!spawn_ammo)
-		return;
+		return false;
 
-	bool forActor = ParentIsActor();
+	bool forActor = ParentIsActor(), ammo_spawned = false;
 
 	xr_map<LPCSTR, u16>::iterator l_it;
 	for(l_it = l_ammo.begin(); l_ammo.end() != l_it; ++l_it) 
@@ -329,8 +324,13 @@ void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 				l_it->second = l_it->second - (l_free < l_it->second ? l_free : l_it->second);
 			}
 		}
-		if(l_it->second && !unlimited_ammo()) SpawnAmmo(l_it->second, l_it->first);
+		if (l_it->second && !unlimited_ammo()) {
+			SpawnAmmo(l_it->second, l_it->first);
+			ammo_spawned = true;
+		}
 	}
+
+	return ammo_spawned;
 }
 
 void CWeaponMagazined::ReloadMagazine()
@@ -386,17 +386,19 @@ void CWeaponMagazined::ReloadMagazine()
 	//нет патронов для перезарядки
 	if(!m_pAmmo && !unlimited_ammo() ) return;
 
+	bool ammo_spawned = false;
+
 	//разрядить магазин, если загружаем патронами другого типа
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload)) {
 		if (!m_bLockType && !m_magazine.empty())
 			if ((ParentIsActor() && !unlimited_ammo()) || (!m_pAmmo || xr_strcmp(m_pAmmo->cNameSect(), *m_magazine.back().m_ammoSect)))
-				UnloadMagazine();
+				ammo_spawned = UnloadMagazine();
 	}
 	else {
 		if (!m_bLockType && !m_magazine.empty() &&
 			(!m_pAmmo || xr_strcmp(m_pAmmo->cNameSect(),
 				*m_magazine.back().m_ammoSect)))
-			UnloadMagazine();
+			ammo_spawned = UnloadMagazine();
 	}
 
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
@@ -418,8 +420,8 @@ void CWeaponMagazined::ReloadMagazine()
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
 
 	//выкинуть коробку патронов, если она пустая
-	if(m_pAmmo && !m_pAmmo->m_boxCurr && OnServer()) 
-		m_pAmmo->SetDropManual(TRUE);
+	if(m_pAmmo && !m_pAmmo->m_boxCurr && OnServer() && ( !ParentIsActor() || ammo_spawned ))
+		m_pAmmo->DestroyObject(); //SetDropManual(TRUE);
 
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload) && ParentIsActor() && m_pAmmo ) {
           int box_size = m_pAmmo->m_boxSize;
