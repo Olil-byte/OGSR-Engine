@@ -655,8 +655,6 @@ public:
 //	virtual void			UpdatePosStack	( u32 Time0, u32 Time1 );
 	virtual void			MoveActor		(Fvector NewPos, Fvector NewDir);
 
-	virtual void			SpawnAmmoForWeapon		(CInventoryItem *pIItem);
-	virtual void			RemoveAmmoForWeapon		(CInventoryItem *pIItem);
 	virtual	void			spawn_supplies			();
 	virtual bool			human_being				() const
 	{
