@@ -282,7 +282,7 @@ void CWeaponMagazined::OnMagazineEmpty()
 	inherited::OnMagazineEmpty();
 }
 
-bool CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
+void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 {
 	xr_map<LPCSTR, u16> l_ammo;
 	
@@ -307,9 +307,9 @@ bool CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
 	
 	if (!spawn_ammo)
-		return false;
+		return;
 
-	bool forActor = ParentIsActor(), ammo_spawned = false;
+	bool forActor = ParentIsActor();
 
 	xr_map<LPCSTR, u16>::iterator l_it;
 	for(l_it = l_ammo.begin(); l_ammo.end() != l_it; ++l_it) 
@@ -324,13 +324,8 @@ bool CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 				l_it->second = l_it->second - (l_free < l_it->second ? l_free : l_it->second);
 			}
 		}
-		if (l_it->second && !unlimited_ammo()) {
-			SpawnAmmo(l_it->second, l_it->first);
-			ammo_spawned = true;
-		}
+		if(l_it->second && !unlimited_ammo()) SpawnAmmo(l_it->second, l_it->first);
 	}
-
-	return ammo_spawned;
 }
 
 void CWeaponMagazined::ReloadMagazine()
@@ -386,19 +381,17 @@ void CWeaponMagazined::ReloadMagazine()
 	//нет патронов для перезарядки
 	if(!m_pAmmo && !unlimited_ammo() ) return;
 
-	bool ammo_spawned = false;
-
 	//разрядить магазин, если загружаем патронами другого типа
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload)) {
 		if (!m_bLockType && !m_magazine.empty())
 			if ((ParentIsActor() && !unlimited_ammo()) || (!m_pAmmo || xr_strcmp(m_pAmmo->cNameSect(), *m_magazine.back().m_ammoSect)))
-				ammo_spawned = UnloadMagazine();
+				UnloadMagazine();
 	}
 	else {
 		if (!m_bLockType && !m_magazine.empty() &&
 			(!m_pAmmo || xr_strcmp(m_pAmmo->cNameSect(),
 				*m_magazine.back().m_ammoSect)))
-			ammo_spawned = UnloadMagazine();
+			UnloadMagazine();
 	}
 
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
