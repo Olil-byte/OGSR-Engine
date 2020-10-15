@@ -19,6 +19,7 @@
 #include "WeaponBinoculars.h"
 #include "WeaponBinocularsVision.h"
 #include "ai_object_location.h"
+#include "WeaponMagazinedWGrenade.h"
 
 #include "game_object_space.h"
 #include "script_callback_ex.h"
@@ -326,6 +327,9 @@ void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 		}
 		if(l_it->second && !unlimited_ammo()) SpawnAmmo(l_it->second, l_it->first);
 	}
+
+	if (auto WGL = smart_cast<CWeaponMagazinedWGrenade*>(this); !WGL || !WGL->m_bGrenadeMode)
+		m_flagsAddOnState |= CSE_ALifeItemWeapon::EWeaponAddonState::eWeaponAmmoUnloaded;
 }
 
 void CWeaponMagazined::ReloadMagazine()
@@ -381,6 +385,8 @@ void CWeaponMagazined::ReloadMagazine()
 	//нет патронов для перезарядки
 	if(!m_pAmmo && !unlimited_ammo() ) return;
 
+	const bool weapon_not_unloaded = (m_flagsAddOnState & CSE_ALifeItemWeapon::EWeaponAddonState::eWeaponAmmoUnloaded) == 0;
+
 	//разрядить магазин, если загружаем патронами другого типа
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload)) {
 		if (!m_bLockType && !m_magazine.empty())
@@ -412,8 +418,11 @@ void CWeaponMagazined::ReloadMagazine()
 
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
 
+	const bool weapon_unloaded = (m_flagsAddOnState & CSE_ALifeItemWeapon::EWeaponAddonState::eWeaponAmmoUnloaded) != 0;
+	Msg("--[%s], weapon_not_unloaded: [%d], weapon_unloaded: [%d]", cName().c_str(), weapon_not_unloaded, weapon_unloaded);
+
 	//выкинуть коробку патронов, если она пустая
-	if(m_pAmmo && !m_pAmmo->m_boxCurr && OnServer() && ( !ParentIsActor() || ammo_spawned ))
+	if(m_pAmmo && !m_pAmmo->m_boxCurr && OnServer() && ( !ParentIsActor() || (ammo_spawned || !(weapon_not_unloaded && weapon_unloaded))))
 		m_pAmmo->DestroyObject(); //SetDropManual(TRUE);
 
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload) && ParentIsActor() && m_pAmmo ) {
@@ -438,6 +447,9 @@ void CWeaponMagazined::ReloadMagazine()
 	}
 
 	VERIFY((u32)iAmmoElapsed == m_magazine.size());
+
+	if (auto WGL = smart_cast<CWeaponMagazinedWGrenade*>(this); !WGL || !WGL->m_bGrenadeMode)
+		m_flagsAddOnState &= ~CSE_ALifeItemWeapon::EWeaponAddonState::eWeaponAmmoUnloaded;
 }
 
 void CWeaponMagazined::OnStateSwitch	(u32 S)

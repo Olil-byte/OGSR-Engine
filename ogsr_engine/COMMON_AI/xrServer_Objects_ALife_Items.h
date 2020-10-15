@@ -138,7 +138,7 @@ enum EWeaponAddonState
 	eWeaponAddonMagazine = 1 << 4,
 	eWeaponAddonScopeMount = 1 << 5,
 
-	//eWeaponAmmoUnloaded = 1 << 6,
+	eWeaponAmmoUnloaded = 1 << 6,
 	eForcedNotexScope = 1 << 7
 };
 
