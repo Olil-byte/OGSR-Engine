@@ -429,7 +429,8 @@ void CWeaponMagazined::ReloadMagazine()
 		m_pAmmo->DestroyObject(); //SetDropManual(TRUE);
 
 	if (Core.Features.test(xrCore::Feature::hard_ammo_reload) && ParentIsActor() && m_pAmmo ) {
-          int box_size = m_pAmmo->m_boxSize;
+	  // KRodin: чтобы он только одну пачку заряжал, а не сразу несколько, если максимальный объем позволяет
+	  /*int box_size = m_pAmmo->m_boxSize;
 	  if ( !m_bLockType && iMagazineSize > iAmmoElapsed && iMagazineSize > box_size ) {
 	    m_bLockType = true;
 	    int need_ammo = iMagazineSize - box_size;
@@ -440,7 +441,7 @@ void CWeaponMagazined::ReloadMagazine()
 	      need_ammo -= box_size;
 	    }
 	    m_bLockType = false;
-	  }
+	  }*/
 	}
 	else if (iMagazineSize > iAmmoElapsed) 
 	{ 
