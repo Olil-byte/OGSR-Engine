@@ -213,10 +213,6 @@ public:
 
 	virtual bool						unlimited_ammo			();
 
-	virtual bool						NeedToDestroyObject()  const;
-	virtual ALife::_TIME_ID				TimePassedAfterDeath() const;
-
-
 public:
 	//свойства артефактов
 	virtual void		UpdateArtefactsOnBelt();
@@ -276,10 +272,7 @@ protected:
 	u8 m_loaded_ph_box_id;
 private:
 	void					SwitchOutBorder(bool new_border_state);
-public:
-	bool					m_bAllowDeathRemove;
-//	u32						m_u32RespawnTime;
-	
+public:	
 	////////////////////////////////////////////////////////
 	void					SetZoomRndSeed			(s32 Seed = 0);
 	s32						GetZoomRndSeed			()	{ return m_ZoomRndSeed;	};
