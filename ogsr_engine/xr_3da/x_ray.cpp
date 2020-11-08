@@ -422,7 +422,7 @@ int APIENTRY WinMain_impl(HINSTANCE hInstance, HINSTANCE hPrevInstance, char* lp
 	return 0;
 }
 
-int stack_overflow_exception_filter	(int exception_code)
+/*int stack_overflow_exception_filter(int exception_code)
 {
    if (exception_code == EXCEPTION_STACK_OVERFLOW)
    {
@@ -434,7 +434,7 @@ int stack_overflow_exception_filter	(int exception_code)
    }
    else
        return EXCEPTION_CONTINUE_SEARCH;
-}
+}*/
 
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -442,17 +442,16 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
     gModulesLoaded = true;
-	__try 
-	{
+	//__try {
 		Debug._initialize();
 
 		WinMain_impl		(hInstance,hPrevInstance,lpCmdLine,nCmdShow);
-	}
+	/*}
 	__except(stack_overflow_exception_filter(GetExceptionCode()))
 	{
 		_resetstkoflw		();
 		FATAL				("stack overflow");
-	}
+	}*/
 
 	ExitFromWinMain = true;
 
