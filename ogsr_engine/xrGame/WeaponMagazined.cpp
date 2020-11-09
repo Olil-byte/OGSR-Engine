@@ -692,7 +692,14 @@ void CWeaponMagazined::OnAnimationEnd(u32 state)
 	switch(state) 
 	{
 		case eReload:
-		  ReloadMagazine();
+			if (!IsMisfire())
+				ReloadMagazine();
+			else 
+			{
+				bMisfire = false;
+				if(iAmmoElapsed>0)
+				--iAmmoElapsed;
+			}
 		  HUD_SOUND::StopSound( sndReload );
 		  SwitchState( eIdle );
 		  break;	// End of reload animation
