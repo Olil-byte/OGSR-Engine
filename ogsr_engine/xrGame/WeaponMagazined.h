@@ -26,6 +26,7 @@ protected:
 	HUD_SOUND		sndShot;
 	HUD_SOUND		sndEmptyClick;
 	HUD_SOUND		sndReload;
+	HUD_SOUND		sndReloadJammed;
 	HUD_SOUND		sndFireModes;
 	HUD_SOUND		sndZoomChange;
 	//звук текущего выстрела
@@ -43,6 +44,7 @@ protected:
 	ESoundTypes		m_eSoundShot;
 	ESoundTypes		m_eSoundEmptyClick;
 	ESoundTypes		m_eSoundReload;
+	ESoundTypes		m_eSoundReloadJammed;
 	struct SWMmotions{
 		MotionSVec		mhud_idle;
 		MotionSVec		mhud_idle_aim;
@@ -53,6 +55,7 @@ protected:
 		MotionSVec		mhud_idle_sprint;
 		MotionSVec		mhud_idle_moving;
 		MotionSVec		mhud_reload_partly;
+		MotionSVec		mhud_reload_jammed;	//
 	};
 	SWMmotions			mhud;	
 	
@@ -62,14 +65,14 @@ protected:
 protected:
 	virtual void	OnMagazineEmpty	();
 
-	virtual void	switch2_Idle	();
-	virtual void	switch2_Fire	();
-	virtual void	switch2_Fire2	(){}
-	virtual void	switch2_Empty	();
-	virtual void	switch2_Reload	();
-	virtual void	switch2_Hiding	();
-	virtual void	switch2_Hidden	();
-	virtual void	switch2_Showing	();
+	virtual void	switch2_Idle		();
+	virtual void	switch2_Fire		();
+	virtual void	switch2_Fire2		(){}
+	virtual void	switch2_Empty		();
+	virtual void	switch2_Reload		();
+	virtual void	switch2_Hiding		();
+	virtual void	switch2_Hidden		();
+	virtual void	switch2_Showing		();
 	
 	virtual void	OnShot			();	
 	

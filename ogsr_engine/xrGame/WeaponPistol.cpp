@@ -117,7 +117,9 @@ void CWeaponPistol::PlayAnimReload() {
   }
   else {
     CWeaponMagazined::SWMmotions& m = swm_current();
-    if ( IsPartlyReloading() )
+	if (IsMisfire())
+		m_pHUD->animPlay(random_anim(mhud.mhud_reload_jammed), TRUE, this, GetState());
+    else if ( IsPartlyReloading() && !IsMisfire())
       m_pHUD->animPlay( random_anim( m.mhud_reload_partly ), TRUE, this, GetState() );
     else
       m_pHUD->animPlay( random_anim( m.mhud_reload ), TRUE, this, GetState() );

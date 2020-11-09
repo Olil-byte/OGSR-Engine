@@ -32,6 +32,7 @@ CWeaponMagazined::CWeaponMagazined(LPCSTR name, ESoundTypes eSoundType) : CWeapo
 	m_eSoundShot		= ESoundTypes(SOUND_TYPE_WEAPON_SHOOTING | eSoundType);
 	m_eSoundEmptyClick	= ESoundTypes(SOUND_TYPE_WEAPON_EMPTY_CLICKING | eSoundType);
 	m_eSoundReload		= ESoundTypes(SOUND_TYPE_WEAPON_RECHARGING | eSoundType);
+	m_eSoundReloadJammed = ESoundTypes(SOUND_TYPE_WEAPON_RECHARGING | eSoundType);
 	
 	m_pSndShotCurrent = NULL;
 	m_sSilencerFlameParticles = m_sSilencerSmokeParticles = NULL;
@@ -54,6 +55,7 @@ CWeaponMagazined::~CWeaponMagazined()
 	HUD_SOUND::DestroySound(sndSilencerShot);
 	HUD_SOUND::DestroySound(sndEmptyClick);
 	HUD_SOUND::DestroySound(sndReload);
+	HUD_SOUND::DestroySound(sndReloadJammed);
 	HUD_SOUND::DestroySound(sndFireModes);
 	HUD_SOUND::DestroySound(sndZoomChange);
 	if (m_binoc_vision)
@@ -68,6 +70,7 @@ void CWeaponMagazined::StopHUDSounds		()
 	
 	HUD_SOUND::StopSound(sndEmptyClick);
 	HUD_SOUND::StopSound(sndReload);
+	HUD_SOUND::StopSound(sndReloadJammed);
 	HUD_SOUND::StopSound(sndFireModes);
 	HUD_SOUND::StopSound(sndZoomChange);
 
@@ -116,6 +119,8 @@ void CWeaponMagazined::Load	(LPCSTR section)
 		HUD_SOUND::LoadSound( section, "snd_fire_modes", sndFireModes, m_eSoundEmptyClick );
 	if ( pSettings->line_exist( section, "snd_zoom_change" ) )
 		HUD_SOUND::LoadSound( section, "snd_zoom_change", sndZoomChange, m_eSoundEmptyClick );
+	if (pSettings->line_exist(section, "snd_reload_jammed"))
+		HUD_SOUND::LoadSound(section, "snd_reload_jammed", sndReloadJammed, m_eSoundReloadJammed);
 	
 	m_pSndShotCurrent = &sndShot;
 		
@@ -126,6 +131,7 @@ void CWeaponMagazined::Load	(LPCSTR section)
 	animGetEx( mhud.mhud_idle_moving, pSettings->line_exist( hud_sect.c_str(), "anim_idle_moving" ) ? "anim_idle_moving" : "anim_idle" );
 	animGetEx( mhud.mhud_idle_sprint, pSettings->line_exist( hud_sect.c_str(), "anim_idle_sprint" ) ? "anim_idle_sprint" : "anim_idle" );
 	animGetEx( mhud.mhud_reload,      "anim_reload" );
+	animGetEx(mhud.mhud_reload_jammed, pSettings->line_exist(hud_sect.c_str(), "anim_reload_jammed") ? "anim_reload_jammed" : "anim_reload");
 	animGetEx( mhud.mhud_show,        "anim_draw" );
 	animGetEx( mhud.mhud_hide,        "anim_holster" );
 	animGetEx( mhud.mhud_shots,       "anim_shoot" );
@@ -775,9 +781,11 @@ void CWeaponMagazined::switch2_Empty()
 }
 void CWeaponMagazined::PlayReloadSound()
 {
+	if (IsMisfire())
+	PlaySound	(sndReloadJammed, get_LastFP());
+	else
 	PlaySound	(sndReload,get_LastFP());
 }
-
 void CWeaponMagazined::switch2_Reload()
 {
 	CWeapon::FireEnd();
@@ -1194,10 +1202,12 @@ void CWeaponMagazined::PlayAnimHide()
 
 void CWeaponMagazined::PlayAnimReload() {
   VERIFY( GetState() == eReload );
-  if ( IsPartlyReloading() )
+  if (IsMisfire())
+	  m_pHUD->animPlay(random_anim(mhud.mhud_reload_jammed), TRUE, this, GetState());
+  else if (IsPartlyReloading() && !IsMisfire())
     m_pHUD->animPlay( random_anim( mhud.mhud_reload_partly ), TRUE, this, GetState() );
-  else
-    m_pHUD->animPlay( random_anim( mhud.mhud_reload ), TRUE, this, GetState() );
+  else if (!IsPartlyReloading() && !IsMisfire())
+	  m_pHUD->animPlay(random_anim(mhud.mhud_reload), TRUE, this, GetState());
 }
 
 
