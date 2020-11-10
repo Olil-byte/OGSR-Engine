@@ -131,7 +131,7 @@ void CWeaponMagazined::Load	(LPCSTR section)
 	animGetEx( mhud.mhud_idle_moving, pSettings->line_exist( hud_sect.c_str(), "anim_idle_moving" ) ? "anim_idle_moving" : "anim_idle" );
 	animGetEx( mhud.mhud_idle_sprint, pSettings->line_exist( hud_sect.c_str(), "anim_idle_sprint" ) ? "anim_idle_sprint" : "anim_idle" );
 	animGetEx( mhud.mhud_reload,      "anim_reload" );
-	animGetEx(mhud.mhud_reload_jammed, pSettings->line_exist(hud_sect.c_str(), "anim_reload_jammed") ? "anim_reload_jammed" : "anim_reload");
+	animGetEx(mhud.mhud_reload_jammed, pSettings->line_exist(hud_sect.c_str(), "anim_reload_jammed") ? "anim_reload_jammed" : "anim_draw");
 	animGetEx( mhud.mhud_show,        "anim_draw" );
 	animGetEx( mhud.mhud_hide,        "anim_holster" );
 	animGetEx( mhud.mhud_shots,       "anim_shoot" );
@@ -141,7 +141,7 @@ void CWeaponMagazined::Load	(LPCSTR section)
 
 	animGetEx( mhud.mhud_reload_partly, "anim_reload_partly", nullptr, "anim_reload" );
 
-	//звуки и партиклы глушителя, еслит такой есть
+	//звуки и партиклы глушителя, если такой есть
 	if(m_eSilencerStatus == ALife::eAddonAttachable)
 	{
 		if(pSettings->line_exist(section, "silencer_flame_particles"))
@@ -337,6 +337,17 @@ void CWeaponMagazined::UnloadMagazine(bool spawn_ammo)
 		}
 		if(l_it->second && !unlimited_ammo()) SpawnAmmo(l_it->second, l_it->first);
 	}
+}
+
+void CWeaponMagazined::ReloadJammed() 
+{
+	// Shell Drop
+	Fvector vel;
+	PHGetLinearVell(vel);
+	OnBulletDrop(get_LastSP(), vel);
+	bMisfire = false;
+	if (iAmmoElapsed > 0)
+	--iAmmoElapsed;
 }
 
 void CWeaponMagazined::ReloadMagazine()
@@ -668,7 +679,7 @@ void CWeaponMagazined::OnShot		()
 	// Animation
 	PlayAnimShoot		();
 	
-	// Shell Drop
+	// Shell Drop // Выброс гильзы
 	Fvector vel; 
 	PHGetLinearVell(vel);
 	OnShellDrop					(get_LastSP(), vel);
@@ -692,14 +703,10 @@ void CWeaponMagazined::OnAnimationEnd(u32 state)
 	switch(state) 
 	{
 		case eReload:
-			if (!IsMisfire())
-				ReloadMagazine();
+			if (IsJammedReloading())
+				ReloadJammed();
 			else 
-			{
-				bMisfire = false;
-				if(iAmmoElapsed>0)
-				--iAmmoElapsed;
-			}
+				ReloadMagazine();	
 		  HUD_SOUND::StopSound( sndReload );
 		  SwitchState( eIdle );
 		  break;	// End of reload animation
@@ -788,7 +795,7 @@ void CWeaponMagazined::switch2_Empty()
 }
 void CWeaponMagazined::PlayReloadSound()
 {
-	if (IsMisfire())
+	if (IsJammedReloading())
 	PlaySound	(sndReloadJammed, get_LastFP());
 	else
 	PlaySound	(sndReload,get_LastFP());
@@ -1209,11 +1216,11 @@ void CWeaponMagazined::PlayAnimHide()
 
 void CWeaponMagazined::PlayAnimReload() {
   VERIFY( GetState() == eReload );
-  if (IsMisfire())
+  if (IsJammedReloading())
 	  m_pHUD->animPlay(random_anim(mhud.mhud_reload_jammed), TRUE, this, GetState());
-  else if (IsPartlyReloading() && !IsMisfire())
+  else if (IsPartlyReloading())
     m_pHUD->animPlay( random_anim( mhud.mhud_reload_partly ), TRUE, this, GetState() );
-  else if (!IsPartlyReloading() && !IsMisfire())
+  else
 	  m_pHUD->animPlay(random_anim(mhud.mhud_reload), TRUE, this, GetState());
 }
 

@@ -79,6 +79,7 @@ protected:
 	virtual void	OnEmptyClick	();
 
 	virtual void	OnAnimationEnd	(u32 state);
+
 	virtual void	OnStateSwitch	(u32 S);
 
 	virtual void	UpdateSounds	();
@@ -87,6 +88,7 @@ protected:
 
 protected:
 	virtual void	ReloadMagazine	();
+	virtual void	ReloadJammed	();
 			void	ApplySilencerKoeffs	();
 
 	virtual void	state_Fire		(float dt);
