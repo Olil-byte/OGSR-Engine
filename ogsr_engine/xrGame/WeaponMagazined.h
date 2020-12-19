@@ -26,6 +26,7 @@ protected:
 	HUD_SOUND		sndShot;
 	HUD_SOUND		sndEmptyClick;
 	HUD_SOUND		sndReload;
+	HUD_SOUND		sndReloadPartly;
 	HUD_SOUND		sndReloadJammed;
 	HUD_SOUND		sndFireModes;
 	HUD_SOUND		sndZoomChange;
@@ -44,6 +45,7 @@ protected:
 	ESoundTypes		m_eSoundShot;
 	ESoundTypes		m_eSoundEmptyClick;
 	ESoundTypes		m_eSoundReload;
+	ESoundTypes		m_eSoundReloadPartly;
 	ESoundTypes		m_eSoundReloadJammed;
 	struct SWMmotions{
 		MotionSVec		mhud_idle;
